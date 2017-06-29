@@ -76,6 +76,12 @@ class Controller
     data = $.extend {}, $li.data('item-data'), {'atwho-at': @at}
     this.callbacks("tplEval").call(this, tpl, data, "onInsert")
 
+  getDataFor: ($li) ->
+    $.extend {}, $li.data('item-data'), {'atwho-at': @at}
+
+  getDataForCurrentlySelected: ->
+    @getDataFor @view.$el.find('.cur')
+
   # Render list view
   #
   # @param data [Array] The data
@@ -92,7 +98,7 @@ class Controller
   # Searching!
   lookUp: (e) ->
     return if e && e.type == 'click' && !@getOpt('lookUpOnClick')
-    return if @getOpt('suspendOnComposing') and @app.isComposing 
+    return if @getOpt('suspendOnComposing') and @app.isComposing
     query = @catchQuery e
     if not query
       @expectedQueryCBId = null

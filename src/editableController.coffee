@@ -5,7 +5,7 @@ class EditableController extends Controller
     sel.getRangeAt(0) if sel.rangeCount > 0
 
   _setRange: (position, node, range=@_getRange()) ->
-    return unless range and node
+    return unless range and node and node.parentElement
     node = $(node)[0]
     if position == 'after'
       range.setEndAfter node
@@ -152,6 +152,7 @@ class EditableController extends Controller
   #
   # @param content [String] string to insert
   insert: (content, $li) ->
+    if content is null then return null
     @$inputor.focus() unless @$inputor.is ':focus'
     overrides = @getOpt 'functionOverrides'
     if overrides.insert
@@ -163,12 +164,11 @@ class EditableController extends Controller
       .addClass 'atwho-inserted'
       .html content
       .attr 'data-atwho-at-query', "" + data['atwho-at'] + @query.text
-      .attr 'contenteditable', "false"
     if range = @_getRange()
       if @query.el.length
         range.setEndAfter @query.el[0]
       range.collapse false
-      range.insertNode suffixNode = @app.document.createTextNode "" + suffix
+      range.insertNode suffixNode = @app.document.createTextNode "\u200D" + suffix
       @_setRange 'after', suffixNode, range
     @$inputor.focus() unless @$inputor.is ':focus'
     @$inputor.change()

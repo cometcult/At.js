@@ -65,3 +65,11 @@ You can include At.js in your `Rails` application using the gem [jquery-atwho-ra
 
 * [@ichord](https://twitter.com/_ichord) (twitter)
 
+### Changes by CometLab
+
+* reverted [#423](https://github.com/ichord/At.js/pull/423) because [it doesn't work with Froala Editor](https://github.com/ichord/At.js/issues/463)
+* added methods `getDataFor` and `getDataForCurrentlySelected` to `Controller` class (used in the next point)
+* added method `getSelectedOption` to the plugin API in order to be able to get model data for currently selected option in dropdown
+* fixed range errors in `EditableController.prototype._setRange` by ensuring the node is still available in the document
+* allowed to block adding any value into the document if `beforeInsert` callback explicitly returns `null`
+* fixed `Api.run` method that was causing errors because it expected an event to be passed

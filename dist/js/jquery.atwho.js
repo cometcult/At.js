@@ -88,7 +88,7 @@ DEFAULT_CALLBACKS = {
     });
   },
   tplEval: function(tpl, map) {
-    var error, error1, template;
+    var error, template;
     template = tpl;
     try {
       if (typeof tpl !== 'string') {
@@ -142,7 +142,7 @@ App = (function() {
   };
 
   App.prototype.setupRootElement = function(iframe, asRoot) {
-    var error, error1;
+    var error;
     if (asRoot == null) {
       asRoot = false;
     }
@@ -408,7 +408,7 @@ Controller = (function() {
   };
 
   Controller.prototype.callDefault = function() {
-    var args, error, error1, funcName;
+    var args, error, funcName;
     funcName = arguments[0], args = 2 <= arguments.length ? slice.call(arguments, 1) : [];
     try {
       return DEFAULT_CALLBACKS[funcName].apply(this, args);
@@ -434,7 +434,7 @@ Controller = (function() {
   };
 
   Controller.prototype.getOpt = function(at, default_value) {
-    var e, error1;
+    var e;
     try {
       return this.setting[at];
     } catch (error1) {
@@ -450,6 +450,16 @@ Controller = (function() {
       'atwho-at': this.at
     });
     return this.callbacks("tplEval").call(this, tpl, data, "onInsert");
+  };
+
+  Controller.prototype.getDataFor = function($li) {
+    return $.extend({}, $li.data('item-data'), {
+      'atwho-at': this.at
+    });
+  };
+
+  Controller.prototype.getDataForCurrentlySelected = function() {
+    return this.getDataFor(this.view.$el.find('.cur'));
   };
 
   Controller.prototype.renderView = function(data) {
@@ -660,7 +670,7 @@ EditableController = (function(superClass) {
     if (range == null) {
       range = this._getRange();
     }
-    if (!(range && node)) {
+    if (!(range && node && node.parentElement)) {
       return;
     }
     node = $(node)[0];
@@ -823,6 +833,9 @@ EditableController = (function(superClass) {
 
   EditableController.prototype.insert = function(content, $li) {
     var data, overrides, range, suffix, suffixNode;
+    if (content === null) {
+      return null;
+    }
     if (!this.$inputor.is(':focus')) {
       this.$inputor.focus();
     }
@@ -832,13 +845,13 @@ EditableController = (function(superClass) {
     }
     suffix = (suffix = this.getOpt('suffix')) === "" ? suffix : suffix || "\u00A0";
     data = $li.data('item-data');
-    this.query.el.removeClass('atwho-query').addClass('atwho-inserted').html(content).attr('data-atwho-at-query', "" + data['atwho-at'] + this.query.text).attr('contenteditable', "false");
+    this.query.el.removeClass('atwho-query').addClass('atwho-inserted').html(content).attr('data-atwho-at-query', "" + data['atwho-at'] + this.query.text);
     if (range = this._getRange()) {
       if (this.query.el.length) {
         range.setEndAfter(this.query.el[0]);
       }
       range.collapse(false);
-      range.insertNode(suffixNode = this.app.document.createTextNode("" + suffix));
+      range.insertNode(suffixNode = this.app.document.createTextNode("\u200D" + suffix));
       this._setRange('after', suffixNode, range);
     }
     if (!this.$inputor.is(':focus')) {
@@ -984,11 +997,21 @@ View = (function() {
   };
 
   View.prototype.choose = function(e) {
-    var $li, content;
+    var $li, callback, content, result;
     if (($li = this.$el.find(".cur")).length) {
       content = this.context.insertContentFor($li);
       this.context._stopDelayedCall();
-      this.context.insert(this.context.callbacks("beforeInsert").call(this.context, content, $li, e), $li);
+      result = this.context.insert(this.context.callbacks("beforeInsert").call(this.context, content, $li, e), $li);
+      if (result === null) {
+        clearTimeout(this.timeoutID);
+        callback = (function(_this) {
+          return function() {
+            return _this.hide();
+          };
+        })(this);
+        this.timeoutID = setTimeout(callback, 0);
+        return;
+      }
       this.context.trigger("inserted", [$li, e]);
       this.hide(e);
     }
@@ -1147,11 +1170,17 @@ Api = {
     return null;
   },
   run: function() {
-    return this.dispatch();
+    return this.dispatch(new $.Event());
   },
   destroy: function() {
     this.shutdown();
     return this.$inputor.data('atwho', null);
+  },
+  getSelectedOption: function() {
+    var c;
+    if (c = this.controller()) {
+      return c.getDataForCurrentlySelected();
+    }
   }
 };
 

@@ -10,10 +10,13 @@ Api =
     if c = this.controller()
       c.view.reposition(c.rect())
   setIframe: (iframe, asRoot) -> this.setupRootElement(iframe, asRoot); null;
-  run: -> this.dispatch()
+  run: -> this.dispatch(new $.Event())
   destroy: ->
     this.shutdown()
     @$inputor.data('atwho', null)
+  getSelectedOption: ->
+    if c = this.controller()
+      c.getDataForCurrentlySelected()
 
 $.fn.atwho = (method) ->
   _args = arguments
